@@ -69,6 +69,25 @@
     selectedTransfer = transfer;
     originOrbit = mission.originBody.orbit;
     destinationOrbit = mission.destinationBody.orbit;
+    
+    
+    var transferOrbitClone = JSON.parse( JSON.stringify( transfer.orbit ) );
+    delete transferOrbitClone.referenceBody;
+    
+    
+    var foo = {
+      originBody: mission.originBody.name(),
+      destinationBody: mission.destinationBody.name(),
+      referenceBody: transfer.orbit.referenceBody.name(),
+      
+      departureTime: t0,
+      arrivalTime: t1,
+      
+      transferOrbit: transferOrbitClone
+    };
+    alex( foo );
+    
+    
     $('#departureTime').text(new KerbalTime(t0).toDateString()).attr({
       title: "UT: " + (t0.toFixed()) + "s"
     });

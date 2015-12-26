@@ -377,31 +377,36 @@
     mu = referenceBody.gravitationalParameter;
     r = numeric.norm2(position);
     v = numeric.norm2(velocity);
-    specificAngularMomentum = crossProduct(position, velocity);
+    specificAngularMomentum = crossProduct(position, velocity);  // Eq. 5.21
     if (specificAngularMomentum[0] !== 0 || specificAngularMomentum[1] !== 0) {
-      nodeVector = normalize([-specificAngularMomentum[1], specificAngularMomentum[0], 0]);
+      nodeVector = normalize([-specificAngularMomentum[1], specificAngularMomentum[0], 0]);  // Eq. 5.22
     } else {
       nodeVector = [1, 0, 0];
     }
-    eccentricityVector = numeric.mulSV(1 / mu, numeric.subVV(numeric.mulSV(v * v - mu / r, position), numeric.mulSV(numeric.dotVV(position, velocity), velocity)));
-    semiMajorAxis = 1 / (2 / r - v * v / mu);
-    eccentricity = numeric.norm2(eccentricityVector);
+    eccentricityVector = numeric.mulSV(1 / mu, numeric.subVV(numeric.mulSV(v * v - mu / r, position), numeric.mulSV(numeric.dotVV(position, velocity), velocity)));  // Eq. 5.23
+    semiMajorAxis = 1 / (2 / r - v * v / mu);  // 5.24
+    eccentricity = numeric.norm2(eccentricityVector);  // Eq. 5.25
     orbit = new Orbit(referenceBody, semiMajorAxis, eccentricity);
-    orbit.inclination = Math.acos(specificAngularMomentum[2] / numeric.norm2(specificAngularMomentum));
+    orbit.inclination = Math.acos(specificAngularMomentum[2] / numeric.norm2(specificAngularMomentum));  // Eq. 5.26
     if (eccentricity === 0) {
       orbit.argumentOfPeriapsis = 0;
       orbit.longitudeOfAscendingNode = 0;
     } else {
-      orbit.longitudeOfAscendingNode = Math.acos(nodeVector[0]);
+      orbit.longitudeOfAscendingNode = Math.acos(nodeVector[0]);  // Eq. 5.27
       if (nodeVector[1] < 0) {
         orbit.longitudeOfAscendingNode = TWO_PI - orbit.longitudeOfAscendingNode;
       }
-      orbit.argumentOfPeriapsis = Math.acos(numeric.dotVV(nodeVector, eccentricityVector) / eccentricity);
-      if (eccentricityVector[2] < 0) {
-        orbit.argumentOfPeriapsis = TWO_PI - orbit.argumentOfPeriapsis;
+      if (eccentricityVector[2] > 1e-7 || eccentricityVector[2] < -1e-7 ) {
+        orbit.argumentOfPeriapsis = Math.acos(numeric.dotVV(nodeVector, eccentricityVector) / eccentricity);  // Eq. 5.28
+        if (eccentricityVector[2] < 0) {
+          orbit.argumentOfPeriapsis = TWO_PI - orbit.argumentOfPeriapsis;
+        }
+      } else {
+        // when the orbit is flat simply compute the angle of the eccentricityVector (which points at pe)
+        orbit.argumentOfPeriapsis = Math.atan2( eccentricityVector[1], eccentricityVector[0] );
       }
     }
-    trueAnomaly = Math.acos(numeric.dotVV(eccentricityVector, position) / (eccentricity * r));
+    trueAnomaly = Math.acos(numeric.dotVV(eccentricityVector, position) / (eccentricity * r));  // Eq. 5.29
     if (numeric.dotVV(position, velocity) < 0) {
       trueAnomaly = -trueAnomaly;
     }
