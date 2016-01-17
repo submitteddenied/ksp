@@ -18,7 +18,6 @@ var TWO_PI = Math.PI;
 var R2D = 180 / Math.PI;
 var SOLAR_HYPER_MAX_R = 3.4e11; // 1.7e11 ~ 1.5x Ap of Eeloo; 2.3e11 2x; 3.4e11 3x
 var DRAWING_ANGULAR_STEP = 1 * Math.PI/180;
-var STEPS = 10;
 
 Orbit.prototype.positionAt = function(t) {
   var pos = this.positionAtTrueAnomaly( this.trueAnomalyAt( t ) );
@@ -26,11 +25,20 @@ Orbit.prototype.positionAt = function(t) {
   //return [pos[0], pos[2]];
 };
 
+/**
+ * Calculates one of the two true anomoalies at the given radius. the other tA 
+ * is simply the negative of the value returned by this function.
+ * @param   {[[Type]]} radius [[Description]]
+ * @returns {[[Type]]} [[Description]]
+ */
 Orbit.prototype.trueAnomalyAtRadius = function(radius){
   // Equation 4.82
-  var n = (this.semiMajorAxis * ( 1 - this.eccentricity * this.eccentricity ) - radius );
+  var n = this.semiMajorAxis * ( 1 - this.eccentricity * this.eccentricity ) - radius;
   var d = this.eccentricity * radius;
-  return Math.acos( n / d );
+  var k = n / d;
+  if( k >= 1 ) return 0;
+  if( k <= -1 ) return Math.PI;
+  return Math.acos( k );
 }
 
 function walk_range( first, last, stride, callback, inclusive_of_last ){
@@ -895,52 +903,6 @@ function drawPatch(orbit, primary_pos, color, line_weight, t0, t1, origin, desti
     }
     canvas.restore();
   }
-
-
-
-//
-//  // Draw flight path (patched part)
-//  canvas.beginPath();
-//  interval(origin_t, destination_t, STEPS, function( t, i ) {
-//    var pos = orbit.positionAt( t );
-//    var x = (primary_pos[0] + pos[0]);
-//    var y = (primary_pos[1] + pos[1]);
-//    if( i > 0 ) canvas.lineTo( x, y );
-//    else canvas.moveTo( x, y );
-//  } );
-//  canvas.stroke();
-//
-//  // close the conic (unpatched part)
-//  canvas.beginPath();
-//  interval( destination_t, origin_t + orbit.period(), STEPS, function( t, i ) {
-//    var pos = orbit.positionAt( t );
-//    var x = (primary_pos[0] + pos[0]);
-//    var y = (primary_pos[1] + pos[1]);
-//    if( i > 0 ) canvas.lineTo( x, y );
-//    else canvas.moveTo( x, y );
-//  } );
-//  //canvas.setLineDash([3,2]);
-//  canvas.lineWidth = 0.2;
-//  canvas.stroke();
-//
-//  
-//  // Draw flyby flight path
-//  canvas.lineWidth = 1;
-//  if( orbit_flyby.isHyperbolic() ){
-//    canvas.strokeStyle = 'red';
-//    draw_hyper_orbit( canvas, orbit_flyby )
-//  } else {
-//    canvas.beginPath();
-//    canvas.strokeStyle = 'purple';
-//    interval(destination_t, destination_t + orbit_flyby.period(), STEPS, function( t, i ) {
-//      var pos = orbit_flyby.positionAt( t );
-//      var x = (primary_pos[0] + pos[0]);
-//      var y = (primary_pos[1] + pos[1]);
-//      if( i > 0 ) canvas.lineTo( x, y );
-//      else canvas.moveTo( x, y );
-//    } );
-//    canvas.stroke();
-//  }
   
   // Draw flyby path
   draw_orbit( canvas, orbit_flyby, primary_pos, "green", 1 );
@@ -1018,6 +980,7 @@ function alex( mission ) {
       destination_pe = min_pe;
     drawPatch( trajectory, primary_initial_pos, "blue", .5, mission.departureTime, mission.arrivalTime, origin, destination, destination_pe );
     //drawPatch( destination.orbit, primary_initial_pos, "red", 2, mission.departureTime, mission.arrivalTime );
+    show_crossings(mission.departureTime);
   };
   (function(){
     var primary = CelestialBody[mission.referenceBody];
@@ -1047,4 +1010,120 @@ if( false ) {
     drawAt( time_now );
     time_now += timer_step;
   }, 20);
+}
+
+function mark(p, r, offset){
+  if(!r) r = 4;
+  if(!offset) offset = [0,0,0];
+  canvas.beginPath();
+  canvas.circle2( offset[0] + p[0], offset[1] + p[1], r );
+  canvas.stroke() 
+}
+
+function orbit_intersections( A, B, time ){
+  if( !A || !B ) return [];
+  if( A.referenceBody != B.referenceBody ) throw new Error("Orbits must share the same primary - they do not");
+  time = time || 0;
+  var primary_initial_pos = A.referenceBody.orbit ? A.referenceBody.orbit.positionAt( time ) : [0,0,0];
+//  if( A.periapsis() > B.periapsis() ){
+//    var t = A;
+//    A = B;
+//    B = t;
+//  }
+  
+  var min_ap = Math.min( A.apoapsis(), B.apoapsis() );
+  var max_pe = Math.max( A.periapsis(), B.periapsis() );
+  // orbits do not cross
+  if( min_ap < max_pe ) return [];
+  var Aaop = normalize_angle(A.argumentOfPeriapsis + A.longitudeOfAscendingNode);
+  var Baop = normalize_angle(B.argumentOfPeriapsis + B.longitudeOfAscendingNode);
+  
+  
+//  canvas.strokeStyle = "red";
+//  canvas.beginPath();
+//  canvas.circle(0,0,min_ap);
+//  canvas.stroke();
+//  canvas.beginPath();
+//  canvas.circle(0,0,max_pe);
+//  canvas.stroke();
+
+//  var A_v_at_pe = A.argumentOfPeriapsis + A.longitudeOfAscendingNode
+//  mark( A.positionAt(rot), 4, primary_initial_pos );
+  
+//  mark( A.positionAt(A.timeAtTrueAnomaly(0)), 4, primary_initial_pos );
+//  mark( B.positionAt(B.timeAtTrueAnomaly(0)), 4, primary_initial_pos );
+//  console.log( A.positionAt(A.timeAtTrueAnomaly(0)) );
+//  console.log( B.positionAt(B.timeAtTrueAnomaly(0)) );
+  
+  var search_space_1 = [];
+  var search_space_2 = [];
+  search_space_1[0] = A.trueAnomalyAtRadius( min_ap );
+  search_space_1[1] = A.trueAnomalyAtRadius( max_pe );
+  search_space_2[0] = -search_space_1[0];
+  search_space_2[1] = -search_space_1[1];
+//  mark( A.positionAtTrueAnomaly( search_space_1[0] ), 4, primary_initial_pos );
+//  mark( A.positionAtTrueAnomaly( search_space_1[1] ), 4, primary_initial_pos );
+//  mark( A.positionAtTrueAnomaly( search_space_2[0] ), 4, primary_initial_pos );
+//  mark( A.positionAtTrueAnomaly( search_space_2[1] ), 4, primary_initial_pos );
+//  console.log( search_space_1[0]*R2D, search_space_1[1]*R2D, search_space_2[0]*R2D, search_space_2[1]*R2D );
+  
+  function f(angle) {
+    var b_ang = normalize_angle(angle + (Aaop - Baop));
+//    mark(A.positionAtTrueAnomaly( angle ), 1, primary_initial_pos);
+//    mark(B.positionAtTrueAnomaly( b_ang ), 1, primary_initial_pos);
+//    console.log( normalize_angle(angle) * R2D, b_ang * R2D, B.radiusAtTrueAnomaly( angle ) - A.radiusAtTrueAnomaly( b_ang ) );
+    return A.radiusAtTrueAnomaly( angle ) - B.radiusAtTrueAnomaly( b_ang );
+  }
+  
+  var results = [];
+  var angl;
+  
+  if( Math.abs(search_space_1[0] - search_space_1[1]) > 1e-10 ) {
+    angl = roots.brentsMethod(search_space_1[0], search_space_1[1], .00001, f );
+  } else {
+    angl = search_space_1[0];
+  }
+  if( angl || angl === 0 ) results.push( A.positionAtTrueAnomaly( angl ) );
+  
+  angl = null;
+  if( Math.abs(search_space_2[0] - search_space_2[1]) > 1e-10 ) {
+    angl = roots.brentsMethod(search_space_2[0], search_space_2[1], .00001, f );
+  } else {
+    angl = search_space_2[0];
+  }
+  if( angl || angl === 0 ) results.push( A.positionAtTrueAnomaly( angl ) );
+  
+  canvas.save();
+  canvas.strokeStyle = 'lime';
+  if( results.length >= 1 ) {
+    mark(results[0], 2, primary_initial_pos);
+  }
+  if( results.length >= 2 ) {
+    mark(results[1], 2, primary_initial_pos);
+  }
+  canvas.restore();
+  
+  
+  return results;
+}
+
+function normalize_angle( a ) {
+  var PI2 = 2 * Math.PI;
+  var r = a % PI2
+  if( r < 0 ) r += PI2;
+  return r;
+}
+
+orbit_intersections( orbit_flyby, CelestialBody.Duna.orbit );
+
+function show_crossings( time ){
+  var siblings = orbit_flyby.referenceBody.children();
+  var crossings = [];
+  for( var i in siblings ){
+    var x = orbit_intersections( orbit_flyby, siblings[i].orbit, time );
+    //if( x.length > 0 ) console.log( i, x.length );
+    if( x.length >= 1 ) crossings.push(x[0]);
+    if( x.length >= 2 ) crossings.push(x[1]);
+  }
+  return crossings;
 }
