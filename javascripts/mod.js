@@ -961,8 +961,10 @@ function scroll_into_view( ctx, pos ) {
   ctx.translate( o[0], o[1] );
 }
 
+var primary_mission;
 function alex( mission ) {
-  
+  primary_mission = mission;
+  var k;
   redraw_me = function() {
     var primary = CelestialBody[mission.referenceBody];
     var primary_initial_pos = primary.orbit ? primary.orbit.positionAt( mission.departureTime ) : [0,0,0];
@@ -980,7 +982,7 @@ function alex( mission ) {
       destination_pe = min_pe;
     drawPatch( trajectory, primary_initial_pos, "blue", .5, mission.departureTime, mission.arrivalTime, origin, destination, destination_pe );
     //drawPatch( destination.orbit, primary_initial_pos, "red", 2, mission.departureTime, mission.arrivalTime );
-    show_crossings(mission.departureTime);
+    k = show_crossings(mission.departureTime);
   };
   (function(){
     var primary = CelestialBody[mission.referenceBody];
@@ -990,6 +992,7 @@ function alex( mission ) {
     }
   })();
   redraw_me();
+  calculate_flyby_encounter_corrections(k);
 }
 
 //alex( demos.Eve );
@@ -1076,30 +1079,41 @@ function orbit_intersections( A, B, time ){
   }
   
   var results = [];
-  var angl;
   
-  if( Math.abs(search_space_1[0] - search_space_1[1]) > 1e-10 ) {
-    angl = roots.brentsMethod(search_space_1[0], search_space_1[1], .00001, f );
-  } else {
-    angl = search_space_1[0];
+  function calculate_crossing( search_space ) {
+    var angl;
+    if( Math.abs(search_space[0] - search_space[1]) > 1e-10 ) {
+      angl = roots.brentsMethod(search_space[0], search_space[1], .00001, f );
+    } else {
+      angl = search_space[0];
+    }
+    if( angl || angl === 0 ) {
+      results.push( {
+        orbits: [
+          A,
+          B,
+        ],
+        true_anomalies: [
+          normalize_angle(angl),
+          normalize_angle(angl + (Aaop - Baop)),
+        ],
+        positions: [
+          A.positionAtTrueAnomaly( angl ),
+          B.positionAtTrueAnomaly( normalize_angle(angl + (Aaop - Baop)) ),
+        ],
+      });
+    }
   }
-  if( angl || angl === 0 ) results.push( A.positionAtTrueAnomaly( angl ) );
-  
-  angl = null;
-  if( Math.abs(search_space_2[0] - search_space_2[1]) > 1e-10 ) {
-    angl = roots.brentsMethod(search_space_2[0], search_space_2[1], .00001, f );
-  } else {
-    angl = search_space_2[0];
-  }
-  if( angl || angl === 0 ) results.push( A.positionAtTrueAnomaly( angl ) );
+  calculate_crossing( search_space_1 );
+  calculate_crossing( search_space_2 );
   
   canvas.save();
   canvas.strokeStyle = 'lime';
   if( results.length >= 1 ) {
-    mark(results[0], 2, primary_initial_pos);
+    mark(results[0].positions[0], 2, primary_initial_pos);
   }
   if( results.length >= 2 ) {
-    mark(results[1], 2, primary_initial_pos);
+    mark(results[1].positions[0], 2, primary_initial_pos);
   }
   canvas.restore();
   
@@ -1118,12 +1132,79 @@ orbit_intersections( orbit_flyby, CelestialBody.Duna.orbit );
 
 function show_crossings( time ){
   var siblings = orbit_flyby.referenceBody.children();
-  var crossings = [];
+  var crossings = {};
   for( var i in siblings ){
     var x = orbit_intersections( orbit_flyby, siblings[i].orbit, time );
-    //if( x.length > 0 ) console.log( i, x.length );
-    if( x.length >= 1 ) crossings.push(x[0]);
-    if( x.length >= 2 ) crossings.push(x[1]);
+    if( x.length > 0 ) {
+      crossings[i] = {crossings: x};
+    }
   }
   return crossings;
+}
+    
+    
+function fix_transfer_orbit_timing( transfer_orbit, destination_body_name, time_of_crossing ) {
+  var k1 = CelestialBody[destination_body_name].orbit.positionAt( time_of_crossing );
+  var ta_flyby = transfer_orbit.trueAnomalyAtPosition(k1);
+  var time_flyby = transfer_orbit.timeAtTrueAnomaly(ta_flyby);
+  var flyby_mean_anomaly_at_epoch = transfer_orbit.meanAnomalyAt(time_flyby - time_of_crossing);
+  transfer_orbit.meanAnomalyAtEpoch = flyby_mean_anomaly_at_epoch;
+  transfer_orbit.timeOfPeriapsisPassage = undefined;
+}
+//fix_transfer_orbit_timing( orbit_flyby, primary_mission.destinationBody, primary_mission.arrivalTime );
+
+
+
+function calculate_flyby_encounter_corrections(k){
+  if(!k) k = show_crossings(primary_mission.arrivalTime);
+  $('#flyby-encounters').html(null);
+  fix_transfer_orbit_timing( orbit_flyby, primary_mission.destinationBody, primary_mission.arrivalTime );
+  var p = orbit_flyby.period();
+  var t1 = primary_mission.arrivalTime % p;
+  
+  function pick_best_burn( crossings, body_name, times_around ){
+    var ti = primary_mission.arrivalTime + p * times_around;
+    function bar(crossing){
+      var t2 = orbit_flyby.timeAtTrueAnomaly(crossing.true_anomalies[0]);
+      if( t2 < t1 ) t2 += p;
+      var td = t2 - t1;
+      return Orbit.courseCorrection(orbit_flyby, CelestialBody[body_name].orbit, ti, ti + td);
+    }
+    
+    var burn1, burn2;
+    burn1 = burn2 = bar(crossings[0]);
+    if( crossings.length > 1 )
+      burn2 = bar(crossings[1]);
+    return burn1.deltaV < burn2.deltaV ? burn1 : burn2;
+  }
+  
+  var last_body_name = null;
+  var $row = $("<div class='row'></div>");
+  $('#flyby-encounters').append($row);
+  var count_cells = 0;
+  for( var body_name in k ){
+    var crossings = k[body_name];
+    var $span = $("<span class='col-sm-3'></span");
+    crossings.burns = [];
+    var str = "";
+    for( var j = 0; j < 10; ++j ){
+      var burn = pick_best_burn(crossings.crossings, body_name, j);
+      crossings.burns.push( burn );
+      if( burn.deltaV <= 200 ) {
+        var dv = (burn.deltaV * 100 + 0.5 |0)/100;
+        //console.log( body_name + "["+i+", "+j+"] " + burn.deltaV, burn );
+        str += body_name + " (+" + j + ") " + dv + "\n";
+      }
+    }
+    if(str){
+      $span.text(str);
+      $row.append($span);
+      if( (++count_cells % 4) == 0 ) {
+        $row = $("<div class='row'></div>");
+        $('#flyby-encounters').append($row);
+      }
+    }
+  }
+
+  return k;
 }
