@@ -1181,30 +1181,28 @@ function calculate_flyby_encounter_corrections(k){
   }
   
   var last_body_name = null;
-  var $row = $("<div class='row'></div>");
+  var $row = $("<div class='row'>");
   $('#flyby-encounters').append($row);
   var count_cells = 0;
   for( var body_name in k ){
     var crossings = k[body_name];
-    var $span = $("<span class='col-sm-3'></span");
+    var $span = $("<div class='col-sm-3'>");
+    $row.append($span);
+    count_cells++;
     crossings.burns = [];
-    var str = "";
     for( var j = 0; j < 10; ++j ){
       var burn = pick_best_burn(crossings.crossings, body_name, j);
       crossings.burns.push( burn );
       if( burn.deltaV <= 200 ) {
-        var dv = (burn.deltaV * 100 + 0.5 |0)/100;
+        var dv = (burn.deltaV * 10 + 0.5 |0)/10;
         //console.log( body_name + "["+i+", "+j+"] " + burn.deltaV, burn );
-        str += body_name + " (+" + j + ") " + dv + "\n";
+        var flight_time = new KerbalTime( burn.arrivalTime - primary_mission.arrivalTime );
+        $span.append("<div title='Time of flight: " + flight_time.toDurationString() + "'>" + body_name + " (+" + j + ") " + dv);
       }
     }
-    if(str){
-      $span.text(str);
-      $row.append($span);
-      if( (++count_cells % 4) == 0 ) {
-        $row = $("<div class='row'></div>");
-        $('#flyby-encounters').append($row);
-      }
+    if( (count_cells % 4) == 0 ) {
+      $row = $("<div class='row'>");
+      $('#flyby-encounters').append($row);
     }
   }
 
