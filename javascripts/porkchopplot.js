@@ -202,6 +202,19 @@
       shortestTimeOfFlight = Math.max(yCenter - this.mission.yScale / 2, 1);
       return this.calculate(this.mission);
     };
+    
+    PorkchopPlot.prototype.selectPoint = function( x, y ) {
+      if( x < 0 ) x = 0;
+      if( x > PLOT_WIDTH ) x = PLOT_WIDTH;
+      if( y < 0 ) y = 0;
+      if( y > PLOT_HEIGHT ) y = PLOT_HEIGHT;
+      
+      this.selectedPoint = {
+        x: x,
+        y: y
+      };
+      return drawPlot.call(this, this.selectedPoint); 
+    }
 
     workerMessage = function(event) {
       var color, colorIndex, j, logDeltaV, logMaxDeltaV, logMinDeltaV, mean, relativeDeltaV, stddev, x, y, _n, _o;
