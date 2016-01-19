@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>KSP Launch Window Planner by alexmoon</title>
+    <title>KSP Launch Window Planner by ens and alexmoon</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="stylesheets/bootstrap.min.css" rel="stylesheet" media="screen">
@@ -138,6 +138,10 @@
     <div class="container">
       <header class="page-header">
         <h1>Launch Window Planner <small>for Kerbal Space Program</small></h1>
+        <div style="background-color:yellow;">
+          See <a href="http://forum.kerbalspaceprogram.com/index.php?/topic/128479-porkchop-plot-showing-your-flight-path-and-where-it-will-take-you-next-gravity-assists/" target="_blank">this KSP forum post</a>
+          for all of the latest information about this modified version of the Launch Window Planner.
+        </div>
       </header>
       <section>
         <div class="row">
@@ -404,8 +408,15 @@
               <li>And of course <a href="https://kerbalspaceprogram.com">Kerbal Space Program</a> for motivating me to finally learn orbital mechanics.</li>
             </ul>
           </div>
-          <a href="https://github.com/alexmoon/ksp"><img style="position: absolute; top: 0; right: 0; border: 0;" src="img/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
-          <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/deed.en_US"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/InteractiveResource" property="dct:title" rel="dct:type">Launch Window Planner</span> by <a xmlns:cc="http://creativecommons.org/ns#" href="https://github.com/alexmoon/ksp" property="cc:attributionName" rel="cc:attributionURL">Alex Moon</a> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/deed.en_US">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>. Icons by <a href="http://glyphicons.com/">Glyphicons</a>.
+          <a href="https://github.com/ens-gijs/ksp"><img style="position: absolute; top: 0; right: 0; border: 0;" src="img/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
+          <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/deed.en_US">
+            <img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" />
+          </a>
+          <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/InteractiveResource" property="dct:title" rel="dct:type">Launch Window Planner</span> by 
+          <a xmlns:cc="http://creativecommons.org/ns#" href="https://github.com/alexmoon/ksp" property="cc:attributionName" rel="cc:attributionURL">Alex Moon</a> and
+          <a xmlns:cc="http://creativecommons.org/ns#" href="https://github.com/ens-gijs/ksp" property="cc:attributionName" rel="cc:attributionURL">Ens Gijs</a> 
+          is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/deed.en_US">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+          Icons by <a href="http://glyphicons.com/">Glyphicons</a>.
         </footer>
       </section>
     </div>
@@ -554,13 +565,17 @@
     </form>
 	<script src="javascripts/mod.js"></script>
     <script>
-      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      if( document.location.hostname != "127.0.0.1" ) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-      ga('create', 'UA-72581362-1', 'auto');
-      ga('send', 'pageview');
+        ga('create', 'UA-72581362-1', 'auto');
+        ga('send', 'pageview');
+      } else {
+        console.warn( "Detected dev environment - GoogleAnalytics out of the loop" ); 
+      }
     </script>
   </body>
 </html>
