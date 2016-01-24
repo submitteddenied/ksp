@@ -257,6 +257,9 @@
         }
       } else {
         E = 2 * Math.atan(Math.tan(tA / 2) / Math.sqrt((1 + e) / (1 - e)));
+        
+        //cosTrueAnomaly = Math.cos(tA);
+        //E = Math.acos((e + cosTrueAnomaly) / (1 + e * cosTrueAnomaly));
         if (E < 0) {
           return E + TWO_PI;
         } else {
@@ -363,6 +366,7 @@
   Orbit.fromApoapsisAndPeriapsis = function(referenceBody, apoapsis, periapsis, inclination, longitudeOfAscendingNode, argumentOfPeriapsis, meanAnomalyAtEpoch, timeOfPeriapsisPassage) {
     var eccentricity, semiMajorAxis, _ref;
 
+//    console.trace("Orbit.fromApoapsisAndPeriapsis", arguments);
     if (apoapsis < periapsis) {
       _ref = [periapsis, apoapsis], apoapsis = _ref[0], periapsis = _ref[1];
     }
@@ -374,6 +378,7 @@
   Orbit.fromPositionAndVelocity = function(referenceBody, position, velocity, t) {
     var eccentricity, eccentricityVector, meanAnomaly, mu, nodeVector, orbit, r, semiMajorAxis, specificAngularMomentum, trueAnomaly, v;
 
+//    console.trace("Orbit.fromPositionAndVelocity", arguments);
     mu = referenceBody.gravitationalParameter;
     r = numeric.norm2(position);
     v = numeric.norm2(velocity);
@@ -384,7 +389,7 @@
       nodeVector = [1, 0, 0];
     }
     eccentricityVector = numeric.mulSV(1 / mu, numeric.subVV(numeric.mulSV(v * v - mu / r, position), numeric.mulSV(numeric.dotVV(position, velocity), velocity)));  // Eq. 5.23
-    semiMajorAxis = 1 / (2 / r - v * v / mu);  // 5.24
+    semiMajorAxis = 1 / ((2 / r) - ((v * v) / mu));  // 5.24
     eccentricity = numeric.norm2(eccentricityVector);  // Eq. 5.25
     orbit = new Orbit(referenceBody, semiMajorAxis, eccentricity);
     orbit.inclination = Math.acos(specificAngularMomentum[2] / numeric.norm2(specificAngularMomentum));  // Eq. 5.26
@@ -410,8 +415,37 @@
     if (numeric.dotVV(position, velocity) < 0) {
       trueAnomaly = -trueAnomaly;
     }
+    
     meanAnomaly = orbit.meanAnomalyAtTrueAnomaly(trueAnomaly);
-    orbit.timeOfPeriapsisPassage = t - meanAnomaly / orbit.meanMotion();
+    var meanMotion = Math.sqrt( mu / Math.pow(semiMajorAxis, 3) );
+    
+    if( false ) {
+      console.log("meanAnomaly", meanAnomaly);
+      var timeFromPe = meanAnomaly / meanMotion;
+      var timeOfPe = t - timeFromPe;
+      var orbitsFromEpoch = t / orbit.period();
+      console.log("orbitsFromEpoch", orbitsFromEpoch);
+      var anomalyFromEpoch = TWO_PI * orbitsFromEpoch;
+      console.log("anomalyFromEpoch", anomalyFromEpoch);
+      var anomalyAtEpoch = (meanAnomaly - anomalyFromEpoch) % TWO_PI;
+      if( anomalyAtEpoch < 0 ) anomalyAtEpoch += TWO_PI;
+      orbit.meanAnomalyAtEpoch = anomalyAtEpoch;
+      console.log("anomalyAtEpoch", anomalyAtEpoch);
+      var ta0 = orbit.trueAnomalyAt(0);
+      
+    } else {
+      //console.log( "meanMotion", meanMotion - orbit.meanMotion(), meanMotion, orbit.meanMotion() );
+//      console.log( "meanAnomaly / meanMotion", meanAnomaly / meanMotion, orbit.period() );
+      orbit.timeOfPeriapsisPassage = t - meanAnomaly / orbit.meanMotion();
+
+//      console.log( "timeOfPeriapsisPassage A", t - meanAnomaly / orbit.meanMotion() );
+//      console.log( "timeOfPeriapsisPassage B", (t%orbit.period()) - meanAnomaly / orbit.meanMotion() );
+//      console.log( "timeOfPeriapsisPassage C", (t - meanAnomaly / orbit.meanMotion()) % orbit.period() );
+    }
+//    var M0 = -(meanMotion * t)  // Eq. 4.38
+//    console.log("M0", M0);
+//    orbit.meanAnomalyAtEpoch = M0;
+//    orbit.timeOfPeriapsisPassage = orbit.timeAtTrueAnomaly(0);
     return orbit;
   };
 

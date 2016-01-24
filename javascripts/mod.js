@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 function target_pe(body, velocity_craft_planetS, intercept_angle, pe, crossing_ahead_of_body){
   pe += body.radius;
   var semi_major_axis = -body.gravitationalParameter / (velocity_craft_planetS * velocity_craft_planetS);
@@ -11,7 +11,7 @@ function target_pe(body, velocity_craft_planetS, intercept_angle, pe, crossing_a
     eccentricity: eccentricity,
     impact_parameter: impact_parameter,
     miss_distance: miss_distance
-  }
+  };
 }
 
 var TWO_PI = Math.PI;
@@ -39,7 +39,7 @@ Orbit.prototype.trueAnomalyAtRadius = function(radius){
   if( k >= 1 ) return 0;
   if( k <= -1 ) return Math.PI;
   return Math.acos( k );
-}
+};
 
 
 
@@ -1146,12 +1146,16 @@ function show_crossings( time ){
     
     
 function fix_transfer_orbit_timing( transfer_orbit, destination_body_name, time_of_crossing ) {
+  
+//  console.trace("fix_transfer_orbit_timing A", transfer_orbit.trueAnomalyAt(time_of_crossing) );
   var k1 = CelestialBody[destination_body_name].orbit.positionAt( time_of_crossing );
   var ta_flyby = transfer_orbit.trueAnomalyAtPosition(k1);
   var time_flyby = transfer_orbit.timeAtTrueAnomaly(ta_flyby);
   var flyby_mean_anomaly_at_epoch = transfer_orbit.meanAnomalyAt(time_flyby - time_of_crossing);
   transfer_orbit.meanAnomalyAtEpoch = flyby_mean_anomaly_at_epoch;
+//  console.log( "transfer_orbit.meanAnomalyAtEpoch", transfer_orbit.meanAnomalyAtEpoch );
   transfer_orbit.timeOfPeriapsisPassage = undefined;
+//  console.trace("fix_transfer_orbit_timing B", transfer_orbit.trueAnomalyAt(time_of_crossing) );
 }
 //fix_transfer_orbit_timing( orbit_flyby, primary_mission.destinationBody, primary_mission.arrivalTime );
 
