@@ -375,7 +375,7 @@
     return new Orbit(referenceBody, semiMajorAxis, eccentricity, inclination, longitudeOfAscendingNode, argumentOfPeriapsis, meanAnomalyAtEpoch, timeOfPeriapsisPassage);
   };
 
-  Orbit.fromPositionAndVelocity = function(referenceBody, position, velocity, t) {
+  Orbit.fromPositionAndVelocity = function(referenceBody, position, velocity, t, dbg) {
     var eccentricity, eccentricityVector, meanAnomaly, mu, nodeVector, orbit, r, semiMajorAxis, specificAngularMomentum, trueAnomaly, v;
 
 //    console.trace("Orbit.fromPositionAndVelocity", arguments);
@@ -411,41 +411,48 @@
         orbit.argumentOfPeriapsis = Math.atan2( eccentricityVector[1], eccentricityVector[0] );
       }
     }
-    trueAnomaly = Math.acos(numeric.dotVV(eccentricityVector, position) / (eccentricity * r));  // Eq. 5.29
+    var trueAnomalyFactor;
+    if( eccentricity < 1 ) {
+      // Eliptic / Circular - breaks down for Hyperbolic
+      trueAnomalyFactor = numeric.dotVV(eccentricityVector, position) / (eccentricity * r);  // Eq. 5.29
+    } else {
+      // Hyperbolic - also appears to work just fine for Eliptic and Circular
+      trueAnomalyFactor = (semiMajorAxis * (1 - eccentricity * eccentricity) - r) / (eccentricity * r);  // Eq. 4.82
+    }
+    
+    // clamp any floating point errors
+    if( trueAnomalyFactor >= 1 ) {
+      trueAnomaly = 0;
+    } else if( trueAnomalyFactor <= -1 ) {
+      trueAnomaly = Math.PI;
+    } else {
+      trueAnomaly = Math.acos( trueAnomalyFactor );
+    }
+    
     if (numeric.dotVV(position, velocity) < 0) {
       trueAnomaly = -trueAnomaly;
     }
-    
     meanAnomaly = orbit.meanAnomalyAtTrueAnomaly(trueAnomaly);
-    var meanMotion = Math.sqrt( mu / Math.pow(semiMajorAxis, 3) );
+    var meanMotion = orbit.meanMotion();
+    orbit.timeOfPeriapsisPassage = t - meanAnomaly / meanMotion;
     
-    if( false ) {
-      console.log("meanAnomaly", meanAnomaly);
-      var timeFromPe = meanAnomaly / meanMotion;
-      var timeOfPe = t - timeFromPe;
-      var orbitsFromEpoch = t / orbit.period();
-      console.log("orbitsFromEpoch", orbitsFromEpoch);
-      var anomalyFromEpoch = TWO_PI * orbitsFromEpoch;
-      console.log("anomalyFromEpoch", anomalyFromEpoch);
-      var anomalyAtEpoch = (meanAnomaly - anomalyFromEpoch) % TWO_PI;
-      if( anomalyAtEpoch < 0 ) anomalyAtEpoch += TWO_PI;
-      orbit.meanAnomalyAtEpoch = anomalyAtEpoch;
-      console.log("anomalyAtEpoch", anomalyAtEpoch);
-      var ta0 = orbit.trueAnomalyAt(0);
-      
-    } else {
-      //console.log( "meanMotion", meanMotion - orbit.meanMotion(), meanMotion, orbit.meanMotion() );
-//      console.log( "meanAnomaly / meanMotion", meanAnomaly / meanMotion, orbit.period() );
-      orbit.timeOfPeriapsisPassage = t - meanAnomaly / orbit.meanMotion();
+    var check_pos = orbit.positionAt(t);
+    var check_error = numeric.norm2( numeric.sub( position, check_pos ) );
+    if( check_error > 1 && console !== undefined ){
+      console.warn( "Orbit position check failed!" );
+      console.warn( "Goal Pos", position );
+      console.warn( "Rslt Pos", check_pos );
+      console.warn( "Error", (check_error * 1000 |0) / 1000 );
 
-//      console.log( "timeOfPeriapsisPassage A", t - meanAnomaly / orbit.meanMotion() );
-//      console.log( "timeOfPeriapsisPassage B", (t%orbit.period()) - meanAnomaly / orbit.meanMotion() );
-//      console.log( "timeOfPeriapsisPassage C", (t - meanAnomaly / orbit.meanMotion()) % orbit.period() );
+      console.log( "  t", t );
+      console.log( "  eccentricity", eccentricity );
+      console.log( "  trueAnomaly", trueAnomaly );
+      console.log( "  semiMajorAxis", semiMajorAxis );
+      console.log( "  meanAnomaly", meanAnomaly );
+      console.log( "  meanMotion", meanMotion );
+      console.log( "  meanAnomaly /meanMotion", meanAnomaly /meanMotion );
+      console.log( "  orbit", orbit );
     }
-//    var M0 = -(meanMotion * t)  // Eq. 4.38
-//    console.log("M0", M0);
-//    orbit.meanAnomalyAtEpoch = M0;
-//    orbit.timeOfPeriapsisPassage = orbit.timeAtTrueAnomaly(0);
     return orbit;
   };
 

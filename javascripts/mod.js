@@ -470,8 +470,8 @@ function drawPatch(orbit, primary_pos, color, line_weight, t0, t1, origin, desti
   if( !color ) color = "blue";
   line_weight = line_weight || 2;
 
-  var origin_pos = origin.orbit.positionAt( t0 ); //origin_pos[0] *= -1;
-  var destination_pos = destination.orbit.positionAt( t1 ); //destination_pos[0] *= -1;
+  var origin_pos = origin.orbit.positionAt( t0 );
+  var destination_pos = destination.orbit.positionAt( t1 );
 
   var origin_true_anomaly = orbit.trueAnomalyAtPosition(origin_pos);
   var destination_true_anomaly = orbit.trueAnomalyAtPosition(destination_pos);
@@ -834,7 +834,15 @@ function drawPatch(orbit, primary_pos, color, line_weight, t0, t1, origin, desti
     redraw_me_body();
     
     orbit_flyby = Orbit.fromPositionAndVelocity( destination.orbit.referenceBody, destination_pos, craft_escape_vector_sun_frame, destination_t );
-    //console.log( "orbit_flyby", orbit_flyby );
+    if( false ) {
+      console.log("-------------------");
+      console.log("  primary", destination.orbit.referenceBody.name() );
+      console.log("  destination_pos", destination_pos );
+      console.log("  velocity vector", craft_escape_vector_sun_frame );
+      console.log("  destination_t", destination_t );
+      console.log("-------------------");
+    }
+    
   }
   /// <=== EXPERIMENT
 
@@ -1146,16 +1154,20 @@ function show_crossings( time ){
     
     
 function fix_transfer_orbit_timing( transfer_orbit, destination_body_name, time_of_crossing ) {
-  
-//  console.trace("fix_transfer_orbit_timing A", transfer_orbit.trueAnomalyAt(time_of_crossing) );
+  //console.log("destination_body_name", destination_body_name);
+  //console.log("time_of_crossing", time_of_crossing);
+  //console.trace("fix_transfer_orbit_timing A", transfer_orbit.trueAnomalyAt(time_of_crossing) );
   var k1 = CelestialBody[destination_body_name].orbit.positionAt( time_of_crossing );
+  //console.log("positionAt time_of_crossing", k1);
   var ta_flyby = transfer_orbit.trueAnomalyAtPosition(k1);
   var time_flyby = transfer_orbit.timeAtTrueAnomaly(ta_flyby);
+  //console.log("ta_flyby", ta_flyby);
+  //console.log("time_flyby", time_flyby);
   var flyby_mean_anomaly_at_epoch = transfer_orbit.meanAnomalyAt(time_flyby - time_of_crossing);
   transfer_orbit.meanAnomalyAtEpoch = flyby_mean_anomaly_at_epoch;
 //  console.log( "transfer_orbit.meanAnomalyAtEpoch", transfer_orbit.meanAnomalyAtEpoch );
   transfer_orbit.timeOfPeriapsisPassage = undefined;
-//  console.trace("fix_transfer_orbit_timing B", transfer_orbit.trueAnomalyAt(time_of_crossing) );
+  //console.trace("fix_transfer_orbit_timing B", transfer_orbit.trueAnomalyAt(time_of_crossing) );
 }
 //fix_transfer_orbit_timing( orbit_flyby, primary_mission.destinationBody, primary_mission.arrivalTime );
 
