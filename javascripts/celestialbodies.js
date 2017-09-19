@@ -99,5 +99,14 @@
   CelestialBody.Pol = Pol = new CelestialBody(1.0813507e19, 44000, 901902.62, new Orbit(Jool, 179890000, 0.17085, 4.25, 2.0, 15.0, 0.9));
 
   CelestialBody.Eeloo = Eeloo = new CelestialBody(1.1149224e21, 210000, 19460, new Orbit(Kerbol, 90118820000, 0.26, 6.15, 50.0, 260.0, 3.14));
+  /*
+  let SMA = 658641.730114689
+  let ECC = 0.0321662678757792
+  let INC = 0.025023399525742
+  let LPE = 161.222056516093
+  let LAN = 234.570698677339
+  let MNA = 3.34660152465654
+  let EPH = 2972170.89189337
+  CelestialBody.TargetShip = new CelestialBody(1e19, 10000, 0, new Orbit(CelestialBody.Kerbin, SMA, ECC, INC, LAN, LPE, MNA, EPH));*/
 
 }).call(this);
