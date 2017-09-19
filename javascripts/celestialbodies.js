@@ -99,14 +99,21 @@
   CelestialBody.Pol = Pol = new CelestialBody(1.0813507e19, 44000, 901902.62, new Orbit(Jool, 179890000, 0.17085, 4.25, 2.0, 15.0, 0.9));
 
   CelestialBody.Eeloo = Eeloo = new CelestialBody(1.1149224e21, 210000, 19460, new Orbit(Kerbol, 90118820000, 0.26, 6.15, 50.0, 260.0, 3.14));
-  /*
-  let SMA = 658641.730114689
-  let ECC = 0.0321662678757792
-  let INC = 0.025023399525742
-  let LPE = 161.222056516093
-  let LAN = 234.570698677339
-  let MNA = 3.34660152465654
-  let EPH = 2972170.89189337
-  CelestialBody.TargetShip = new CelestialBody(1e19, 10000, 0, new Orbit(CelestialBody.Kerbin, SMA, ECC, INC, LAN, LPE, MNA, EPH));*/
+
+  
+  function DasPlovessa(){
+    let SMA = 14505198396.186733, ECC = 0.021891570397047363, INC = 3.2304156822583807, LPE = 291.15107397136842, LAN = 251.74847737501767, MNA = -2.8736237561338274, EPH = 0
+    CelestialBody['zz Das Plovessa'] = new CelestialBody(1e19, 10000, 0, new Orbit(CelestialBody.Kerbol, SMA, ECC, INC, LAN, LPE, MNA, EPH));
+  }
+  
+  function DasJebScrap(){
+    let SMA = 29400703798.890575, ECC = 0.47299361458259215, INC = 5.729212792879915, LPE = 72.090976104182602, LAN = 30.738749835052886, MNA = 1.9054740728599457, EPH = 0
+    CelestialBody['zz Das Jeb Scrap'] = new CelestialBody(1e19, 10000, 0, new Orbit(CelestialBody.Kerbol, SMA, ECC, INC, LAN, LPE, MNA, EPH));
+  }
+  
+  DasPlovessa();
+  DasJebScrap();
 
 }).call(this);
+//Das Plovessa SMA = 14505198396.186733 ECC = 0.021891570397047363 INC = 3.2304156822583807 LPE = 291.15107397136842 LAN = 251.74847737501767 MNA = -2.8736237561338274 EPH = 0 REF = 0 }
+//Das Jeb Scrap SMA = 29400703798.890575 ECC = 0.47299361458259215 INC = 5.729212792879915 LPE = 72.090976104182602 LAN = 30.738749835052886 MNA = 1.9054740728599457 EPH = 0 REF = 0 }
