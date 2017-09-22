@@ -218,8 +218,8 @@
       val = $input.val();
       if (isNaN(val) || isBlank(val)) {
         $input.closest('.form-group').addClass('has-error').find('.help-block').text('Must be a number').show();
-      } else if (val < 0 || val > 2 * Math.PI) {
-        $input.closest('.form-group').addClass('has-error').find('.help-block').text("Must be between 0 and 2\u03c0 (6.28\u2026)").show();
+      } else if (val < -2 * Math.PI || val > 2 * Math.PI) {
+        $input.closest('.form-group').addClass('has-error').find('.help-block').text("Must be between -2\u03c0 and 2\u03c0 (6.28\u2026)").show();
       } else {
         $input.closest('.form-group').removeClass('has-error').find('.help-block').hide();
       }

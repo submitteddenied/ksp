@@ -1209,8 +1209,9 @@ function calculate_flyby_encounter_corrections(k){
     for( var j = 0; j < 10; ++j ){
       var burn = pick_best_burn(crossings.crossings, body_name, j);
       crossings.burns.push( burn );
-      if( burn.deltaV <= 200 ) {
+      if( burn.deltaV <= 1000 ) {
         var dv = (burn.deltaV * 10 + 0.5 |0)/10;
+        if(dv > 99) dv = dv |0;
         //console.log( body_name + "["+i+", "+j+"] " + burn.deltaV, burn );
         var flight_time = new KerbalTime( burn.arrivalTime - primary_mission.arrivalTime );
         $span.append("<div title='Time of flight: " + flight_time.toDurationString() + "'>" + body_name + " (+" + j + ") " + dv);

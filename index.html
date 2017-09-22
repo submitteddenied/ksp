@@ -137,7 +137,7 @@
   <body>
     <div class="container">
       <header class="page-header">
-        <h1>Launch Window Planner <small>for Kerbal Space Program</small></h1>
+        <h1>Launch Window &amp; Flyby Planner <small>for Kerbal Space Program</small></h1>
         <div style="background-color:yellow;">
           See <a href="http://forum.kerbalspaceprogram.com/index.php?/topic/128479-porkchop-plot-showing-your-flight-path-and-where-it-will-take-you-next-gravity-assists/" target="_blank">this KSP forum post</a>
           for all of the latest information about this modified version of the Launch Window Planner.
@@ -197,7 +197,7 @@
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-sm-4 col-md-4 control-label" for="destinationSelect">Destination</label>
+                  <label class="col-sm-4 col-md-4 control-label" for="destinationSelect">First Destination</label>
                   <div class="col-sm-8 col-md-8">
                     <div class="form-inline">
                       <div class="form-group">
@@ -252,8 +252,8 @@
                   <div class="col-sm-8 col-md-8">
                     <select id="transferTypeSelect" class="form-control">
     									<option value="ballistic" selected>Ballistic</option>
-    									<option value="optimalPlaneChange">Mid-course plane change</option>
-    									<option value="optimal">Optimal</option>
+    									<!-- <option value="optimalPlaneChange">Mid-course plane change</option>
+    									<option value="optimal">Optimal</option>-->
                     </select>
                   </div>
                 </div>
@@ -318,7 +318,7 @@
               <li>After plotting a transfer use WSAD keys to move your selection.</li>
               <li>As you change the selected transfer the solar system view (left) will be updated to reflect your flight path and the flyby path will be drawn in the destination body view (right).</li>
               <li>Each of these views may be panned by click-draging with the mouse and may be zoomed in and out using the mouse wheel.</li>
-              <li>The box immediatly under the "Delta-v transfer plot" will contain a listing of possible post-flyby encoutners which can be achieved with the selected transfer. The format of this information is "Body(orbits of craft) delta-v" as executed near/within the SOI of the flyby body. Hovering over an entry in the list will show its "Time of flight".</li>
+              <li>The box immediatly under the "Delta-v transfer plot" will contain a listing of possible post-flyby encoutners which can be achieved with the selected transfer. The format of this information is "Body(orbits of craft) delta-v" as executed near/within the SOI of the flyby body. Hovering over an entry in the list will show its "Time of flight", this is the time AFTER the flyby.</li>
               <li>The value specified by the "Final orbit" field controls the Pe used at the flyby body (both with and without "no insertion burn" selected).</li>
             </ul>
           </div>
@@ -419,6 +419,7 @@
               <li>The trajectory your ship will take after the flyby is shown in BLUE.</li>
               <li>Mouse wheel zooms.</li>
               <li>Click and drag to pan.</li>
+              <li>WSAD keys to adjust your transfer.</li>
             </ul>
           </div>
           <div class="col-sm-5 col-md-5 col-lg-5">
