@@ -472,6 +472,12 @@ function drawPatch(orbit, primary_pos, color, line_weight, t0, t1, origin, desti
 
   var origin_pos = origin.orbit.positionAt( t0 );
   var destination_pos = destination.orbit.positionAt( t1 );
+  
+  // Mark where we meet the target body
+  canvas.save();
+  canvas.strokeStyle = "lime";
+  mark(destination_pos, 4, primary_pos);
+  canvas.restore();
 
   var origin_true_anomaly = orbit.trueAnomalyAtPosition(origin_pos);
   var destination_true_anomaly = orbit.trueAnomalyAtPosition(destination_pos);
@@ -481,6 +487,11 @@ function drawPatch(orbit, primary_pos, color, line_weight, t0, t1, origin, desti
   while( destination_t < origin_t ) {
     destination_t += orbit.period();
   }
+  
+  canvas.save();
+  canvas.strokeStyle = "orange";
+  mark(orbit.positionAt( destination_t ), 3, primary_pos);
+  canvas.restore();
 
   /// EXPERIMENT ===>
   
@@ -699,7 +710,7 @@ function drawPatch(orbit, primary_pos, color, line_weight, t0, t1, origin, desti
       var asymptote_crossing_pos = intersection_of_lines([0,0,0], vector_to_pe, [miss_distance,0,0], velocity_craft_planetV);
       asymptote_points[1] = asymptote_crossing_pos;
       
-      var crossings = intersection_directed_ray_circle_2d([0,0], destination.sphereOfInfluence, asymptote_crossing_pos.slice(0,2), vector.scale(velocity_craft_planetV.slice(0,2), -1));
+      var crossings = intersection_directed_ray_circle_2d([0,0], Math.max(destination.sphereOfInfluence, 1000000), asymptote_crossing_pos.slice(0,2), vector.scale(velocity_craft_planetV.slice(0,2), -1));
       if( crossings.length == 0 )
         throw new Error("BOOM");
       asymptote_points[0] = crossings[0];
@@ -727,7 +738,7 @@ function drawPatch(orbit, primary_pos, color, line_weight, t0, t1, origin, desti
       body_canvas.stroke();
       
       
-      crossings = intersection_directed_ray_circle_2d([0,0], destination.sphereOfInfluence, asymptote_crossing_pos.slice(0,2), ejection_vector.slice(0,2));
+      crossings = intersection_directed_ray_circle_2d([0,0], Math.max(destination.sphereOfInfluence, 1000000), asymptote_crossing_pos.slice(0,2), ejection_vector.slice(0,2));
       asymptote_points[2] = crossings[0];
       body_canvas.beginPath();
       body_canvas.moveTo(asymptote_crossing_pos[0], asymptote_crossing_pos[1]);
@@ -833,7 +844,10 @@ function drawPatch(orbit, primary_pos, color, line_weight, t0, t1, origin, desti
     }
     redraw_me_body();
     
-    orbit_flyby = Orbit.fromPositionAndVelocity( destination.orbit.referenceBody, destination_pos, craft_escape_vector_sun_frame, destination_t );
+    if( destination.sphereOfInfluence > 1000 )
+      orbit_flyby = Orbit.fromPositionAndVelocity( destination.orbit.referenceBody, destination_pos, craft_escape_vector_sun_frame, destination_t );
+    else
+      orbit_flyby = orbit
     if( false ) {
       console.log("-------------------");
       console.log("  primary", destination.orbit.referenceBody.name() );
@@ -886,7 +900,7 @@ function drawPatch(orbit, primary_pos, color, line_weight, t0, t1, origin, desti
     //canvas.fillText2("Ap", x, y, 0, -text_offset);
     canvas.restore();
 
-    if( false ){
+    if( true ){
       canvas.beginPath();
       var an = pos = orbit.positionAtTrueAnomaly( orbit.trueAnomalyAt( orbit.argumentOfPeriapsis ) );
       x = (primary_pos[0] + pos[0]);
@@ -915,7 +929,8 @@ function drawPatch(orbit, primary_pos, color, line_weight, t0, t1, origin, desti
   }
   
   // Draw flyby path
-  draw_orbit( canvas, orbit_flyby, primary_pos, "green", 1 );
+  if( destination.sphereOfInfluence > 1000 )
+    draw_orbit( canvas, orbit_flyby, primary_pos, "green", 1 );
   
   
   canvas.restore();
@@ -1117,7 +1132,7 @@ function orbit_intersections( A, B, time ){
   calculate_crossing( search_space_1 );
   calculate_crossing( search_space_2 );
   
-  canvas.save();
+/*  canvas.save();
   canvas.strokeStyle = 'lime';
   if( results.length >= 1 ) {
     mark(results[0].positions[0], 2, primary_initial_pos);
@@ -1125,7 +1140,7 @@ function orbit_intersections( A, B, time ){
   if( results.length >= 2 ) {
     mark(results[1].positions[0], 2, primary_initial_pos);
   }
-  canvas.restore();
+  canvas.restore();*/
   
   
   return results;

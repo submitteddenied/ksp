@@ -103,12 +103,12 @@
   
   function DasPlovessa(){
     let SMA = 14505198396.186733, ECC = 0.021891570397047363, INC = 3.2304156822583807, LPE = 291.15107397136842, LAN = 251.74847737501767, MNA = -2.8736237561338274, EPH = null
-    CelestialBody['Plovessa'] = new CelestialBody(1e19, 10000, 0, new Orbit(CelestialBody.Kerbol, SMA, ECC, INC, LAN, LPE, MNA, EPH));
+    CelestialBody['Plovessa'] = new CelestialBody(1, 10000, 0, new Orbit(CelestialBody.Kerbol, SMA, ECC, INC, LAN, LPE, MNA, EPH));
   }
   
   function DasJebScrap(){
     let SMA = 29400703798.890575, ECC = 0.47299361458259215, INC = 5.729212792879915, LPE = 72.090976104182602, LAN = 30.738749835052886, MNA = 1.9054740728599457, EPH = null
-    CelestialBody['JebScrap'] = new CelestialBody(1e19, 10000, 0, new Orbit(CelestialBody.Kerbol, SMA, ECC, INC, LAN, LPE, MNA, EPH));
+    CelestialBody['JebScrap'] = new CelestialBody(1, 10000, 0, new Orbit(CelestialBody.Kerbol, SMA, ECC, INC, LAN, LPE, MNA, EPH));
   }
   
   DasPlovessa();
