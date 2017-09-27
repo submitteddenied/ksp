@@ -2,6 +2,11 @@
 
 "use strict";
 
+/**
+ * quaternion's in the form of [x, y, z, w]
+ *
+ *
+ */
 var quaternion = {
     add: numeric.add,
     addeq: numeric.addeq,
@@ -21,6 +26,12 @@ quaternion.normalize = function(q) {
     return numeric.divVS(q, s);
 };
 
+/**
+ * Multiply two quaternion's - not a commutative operation
+ * @param   {Vector4} q0 
+ * @param   {Vector4} q1 
+ * @returns {Vector4}
+ */
 quaternion.concat = function(q0, q1) {
     var x0 = q0[0], y0 = q0[1], z0 = q0[2], w0 = q0[3],
         x1 = q1[0], y1 = q1[1], z1 = q1[2], w1 = q1[3],
@@ -33,6 +44,12 @@ quaternion.concat = function(q0, q1) {
     return result;
 };
 
+/**
+ * Rotation can be represented by a vector and an angle of revolution about that vector.
+ * @param   {Number} angle rotation in radians
+ * @param   {Vector3} axis axis to rotate around
+ * @returns {Vector4} quaternion expressiong the rotation about the axis
+ */
 quaternion.fromAngleAxis = function(angle, axis) {
     var halfAngle = 0.5 * angle,
         sin = Math.sin(halfAngle);
@@ -41,6 +58,29 @@ quaternion.fromAngleAxis = function(angle, axis) {
     return quaternion.normalize([sin * axis[0], sin * axis[1], sin * axis[2], Math.cos(halfAngle)]);
 };
 
+quaternion.toAngleAxis = function(q) {
+  // http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToAngle/index.htm
+  if( q[3] > 1 ) q = quaternion.normalize(q);
+  var w = q[3];
+  var angle = 2 * Math.acos( w );
+  var s = Math.sqrt( 1 - (w * w) );
+  var axis;
+  if( Math.abs(angle) < 1e-4 )
+    axis = [0,0,1];
+  else if ( Math.abs(Math.PI - angle) < 1e-4 )
+    axis = [ q[0], q[1], q[2] ];
+  else
+    axis = [q[0]/s,q[1]/s,q[2]/s];
+            
+  return {angle: angle, axis: axis};
+};
+
+/**
+ * Calcuates the quaternion which will rotate 'from' to 'to'
+ * @param   {[[Type]]} from [[Description]]
+ * @param   {[[Type]]} to   [[Description]]
+ * @returns {Array}    [[Description]]
+ */
 quaternion.fromToRotation = function(from, to) {
   var dot, q, s, invs
   from = numeric.divVS(from, numeric.norm2(from))

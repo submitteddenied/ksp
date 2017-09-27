@@ -244,6 +244,9 @@
         }
       } else {
         E = 2 * Math.atan(Math.tan(tA / 2) / Math.sqrt((1 + e) / (1 - e)));
+
+        //cosTrueAnomaly = Math.cos(tA);
+        //E = Math.acos((e + cosTrueAnomaly) / (1 + e * cosTrueAnomaly));
         if (E < 0) {
           return E + TWO_PI;
         } else {
@@ -342,7 +345,10 @@
   };
 
   Orbit.fromApoapsisAndPeriapsis = function(referenceBody, apoapsis, periapsis, inclination, longitudeOfAscendingNode, argumentOfPeriapsis, meanAnomalyAtEpoch, timeOfPeriapsisPassage) {
+<<<<<<< HEAD
     var eccentricity, ref, semiMajorAxis;
+
+//    console.trace("Orbit.fromApoapsisAndPeriapsis", arguments);
     if (apoapsis < periapsis) {
       ref = [periapsis, apoapsis], apoapsis = ref[0], periapsis = ref[1];
     }
@@ -351,41 +357,84 @@
     return new Orbit(referenceBody, semiMajorAxis, eccentricity, inclination, longitudeOfAscendingNode, argumentOfPeriapsis, meanAnomalyAtEpoch, timeOfPeriapsisPassage);
   };
 
-  Orbit.fromPositionAndVelocity = function(referenceBody, position, velocity, t) {
+  Orbit.fromPositionAndVelocity = function(referenceBody, position, velocity, t, dbg) {
     var eccentricity, eccentricityVector, meanAnomaly, mu, nodeVector, orbit, r, semiMajorAxis, specificAngularMomentum, trueAnomaly, v;
+
+//    console.trace("Orbit.fromPositionAndVelocity", arguments);
     mu = referenceBody.gravitationalParameter;
     r = numeric.norm2(position);
     v = numeric.norm2(velocity);
-    specificAngularMomentum = crossProduct(position, velocity);
+    specificAngularMomentum = crossProduct(position, velocity);  // Eq. 5.21
     if (specificAngularMomentum[0] !== 0 || specificAngularMomentum[1] !== 0) {
-      nodeVector = normalize([-specificAngularMomentum[1], specificAngularMomentum[0], 0]);
+      nodeVector = normalize([-specificAngularMomentum[1], specificAngularMomentum[0], 0]);  // Eq. 5.22
     } else {
       nodeVector = [1, 0, 0];
     }
-    eccentricityVector = numeric.mulSV(1 / mu, numeric.subVV(numeric.mulSV(v * v - mu / r, position), numeric.mulSV(numeric.dotVV(position, velocity), velocity)));
-    semiMajorAxis = 1 / (2 / r - v * v / mu);
-    eccentricity = numeric.norm2(eccentricityVector);
+    eccentricityVector = numeric.mulSV(1 / mu, numeric.subVV(numeric.mulSV(v * v - mu / r, position), numeric.mulSV(numeric.dotVV(position, velocity), velocity)));  // Eq. 5.23
+    semiMajorAxis = 1 / ((2 / r) - ((v * v) / mu));  // 5.24
+    eccentricity = numeric.norm2(eccentricityVector);  // Eq. 5.25
     orbit = new Orbit(referenceBody, semiMajorAxis, eccentricity);
-    orbit.inclination = Math.acos(specificAngularMomentum[2] / numeric.norm2(specificAngularMomentum));
+    orbit.inclination = Math.acos(specificAngularMomentum[2] / numeric.norm2(specificAngularMomentum));  // Eq. 5.26
     if (eccentricity === 0) {
       orbit.argumentOfPeriapsis = 0;
       orbit.longitudeOfAscendingNode = 0;
     } else {
-      orbit.longitudeOfAscendingNode = Math.acos(nodeVector[0]);
+      orbit.longitudeOfAscendingNode = Math.acos(nodeVector[0]);  // Eq. 5.27
       if (nodeVector[1] < 0) {
         orbit.longitudeOfAscendingNode = TWO_PI - orbit.longitudeOfAscendingNode;
       }
-      orbit.argumentOfPeriapsis = Math.acos(numeric.dotVV(nodeVector, eccentricityVector) / eccentricity);
-      if (eccentricityVector[2] < 0) {
-        orbit.argumentOfPeriapsis = TWO_PI - orbit.argumentOfPeriapsis;
+      if (eccentricityVector[2] > 1e-7 || eccentricityVector[2] < -1e-7 ) {
+        orbit.argumentOfPeriapsis = Math.acos(numeric.dotVV(nodeVector, eccentricityVector) / eccentricity);  // Eq. 5.28
+        if (eccentricityVector[2] < 0) {
+          orbit.argumentOfPeriapsis = TWO_PI - orbit.argumentOfPeriapsis;
+        }
+      } else {
+        // when the orbit is flat simply compute the angle of the eccentricityVector (which points at pe)
+        orbit.argumentOfPeriapsis = Math.atan2( eccentricityVector[1], eccentricityVector[0] );
       }
     }
-    trueAnomaly = Math.acos(numeric.dotVV(eccentricityVector, position) / (eccentricity * r));
+    var trueAnomalyFactor;
+    if( eccentricity < 1 ) {
+      // Eliptic / Circular - breaks down for Hyperbolic
+      trueAnomalyFactor = numeric.dotVV(eccentricityVector, position) / (eccentricity * r);  // Eq. 5.29
+    } else {
+      // Hyperbolic - also appears to work just fine for Eliptic and Circular
+      trueAnomalyFactor = (semiMajorAxis * (1 - eccentricity * eccentricity) - r) / (eccentricity * r);  // Eq. 4.82
+    }
+
+    // clamp any floating point errors
+    if( trueAnomalyFactor >= 1 ) {
+      trueAnomaly = 0;
+    } else if( trueAnomalyFactor <= -1 ) {
+      trueAnomaly = Math.PI;
+    } else {
+      trueAnomaly = Math.acos( trueAnomalyFactor );
+    }
+
     if (numeric.dotVV(position, velocity) < 0) {
       trueAnomaly = -trueAnomaly;
     }
     meanAnomaly = orbit.meanAnomalyAtTrueAnomaly(trueAnomaly);
-    orbit.timeOfPeriapsisPassage = t - meanAnomaly / orbit.meanMotion();
+    var meanMotion = orbit.meanMotion();
+    orbit.timeOfPeriapsisPassage = t - meanAnomaly / meanMotion;
+
+    var check_pos = orbit.positionAt(t);
+    var check_error = numeric.norm2( numeric.sub( position, check_pos ) );
+    if( check_error > 1 && console !== undefined ){
+      console.warn( "Orbit position check failed!" );
+      console.warn( "Goal Pos", position );
+      console.warn( "Rslt Pos", check_pos );
+      console.warn( "Error", (check_error * 1000 |0) / 1000 );
+
+      console.log( "  t", t );
+      console.log( "  eccentricity", eccentricity );
+      console.log( "  trueAnomaly", trueAnomaly );
+      console.log( "  semiMajorAxis", semiMajorAxis );
+      console.log( "  meanAnomaly", meanAnomaly );
+      console.log( "  meanMotion", meanMotion );
+      console.log( "  meanAnomaly /meanMotion", meanAnomaly /meanMotion );
+      console.log( "  orbit", orbit );
+    }
     return orbit;
   };
 

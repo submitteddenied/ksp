@@ -64,7 +64,7 @@
       $('.help-block', this.form).hide();
       $('#bodyType a[href="#planetFields"]', this.form).tab('show');
       if (referenceBody != null) {
-        $('#referenceBodySelect', this.form).val(referenceBody.name()).prop('disabled', true);
+        $('#referenceBodySelect', this.form).val(referenceBody.name()).prop('disabled', false);
         $('.modal-header h4', this.form).text("New destination orbiting " + (referenceBody.name()));
       } else {
         $('#referenceBodySelect', this.form).val('Kerbol').prop('disabled', false);
@@ -94,7 +94,7 @@
       }
       $('.modal-header h4', this.form).text("Editing " + (body.name()));
       $('#bodyName', this.form).val(body.name()).data('originalValue', body.name());
-      $('#referenceBodySelect', this.form).val(body.orbit.referenceBody.name()).prop('disabled', fixedReferenceBody);
+      $('#referenceBodySelect', this.form).val(body.orbit.referenceBody.name()).prop('disabled', false); //fixedReferenceBody);
       $('#semiMajorAxis', this.form).val(orbit.semiMajorAxis / 1000);
       $('#eccentricity', this.form).val(orbit.eccentricity);
       $('#inclination', this.form).val(orbit.inclination * 180 / Math.PI);
@@ -125,14 +125,22 @@
         mass = +$('#planetMass').val();
         radius = +$('#planetRadius').val() * 1000;
       } else {
-        timeOfPeriapsisPassage = KerbalTime.parse($('#timeOfPeriapsisPassage').val()).t;
+        let ttt = $('#timeOfPeriapsisPassage').val()
+        if ( /(?:\d+[.]?\d*)/.test(ttt) )
+          timeOfPeriapsisPassage = parseFloat(ttt);
+        else
+          timeOfPeriapsisPassage = KerbalTime.parse().t;
+        mass = 1.e19
+        radius = 100000
       }
       orbit = new Orbit(referenceBody, semiMajorAxis, eccentricity, inclination, longitudeOfAscendingNode, argumentOfPeriapsis, meanAnomalyAtEpoch, timeOfPeriapsisPassage);
+      console.log(orbit)
       if (originalName != null) {
         originalBody = CelestialBody[originalName];
         delete CelestialBody[originalName];
       }
       newBody = CelestialBody[name] = new CelestialBody(mass, radius, null, orbit);
+      console.log(newBody)
       if (originalBody != null) {
         _ref = originalBody.children();
         for (k in _ref) {
@@ -210,8 +218,8 @@
       val = $input.val();
       if (isNaN(val) || isBlank(val)) {
         $input.closest('.form-group').addClass('has-error').find('.help-block').text('Must be a number').show();
-      } else if (val < 0 || val > 2 * Math.PI) {
-        $input.closest('.form-group').addClass('has-error').find('.help-block').text("Must be between 0 and 2\u03c0 (6.28\u2026)").show();
+      } else if (val < -2 * Math.PI || val > 2 * Math.PI) {
+        $input.closest('.form-group').addClass('has-error').find('.help-block').text("Must be between -2\u03c0 and 2\u03c0 (6.28\u2026)").show();
       } else {
         $input.closest('.form-group').removeClass('has-error').find('.help-block').hide();
       }
@@ -224,7 +232,7 @@
       val = $input.val();
       if (isBlank(val)) {
         $input.closest('.form-group').addClass('has-error').find('.help-block').text('Must be a Kerbal date').show();
-      } else if (!/^\s*\d*[1-9]\d*\/\d*[1-9]\d*\s+\d+:\d+:\d+\s*$/.test(val)) {
+      } else if (!/(?:^\s*\d*[1-9]\d*\/\d*[1-9]\d*\s+\d+:\d+:\d+\s*$)|(?:\d+[.]?\d*)/.test(val)) {
         $input.closest('.form-group').addClass('has-error').find('.help-block').text('Must be a valid Kerbal date: year/day hour:min:sec').show();
       } else {
         $input.closest('.form-group').removeClass('has-error').find('.help-block').hide();
